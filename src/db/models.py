@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, func
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.sql.sqltypes import DateTime, Date
+from sqlalchemy.sql.schema import ForeignKey, UniqueConstraint
 
 
 class Base(DeclarativeBase):
@@ -11,6 +12,8 @@ class Base(DeclarativeBase):
 
 class Contact(Base):
     __tablename__ = "contacts"
+    # check user name and its uniqueness
+    # __table_args__ = (UniqueConstraint("name", "user_id", name="unique_user"),)
 
     def __repr__(self):
         return f"#Contact(id={self.id}, name={self.first_name} {self.last_name}, email={self.email})"
@@ -24,17 +27,17 @@ class Contact(Base):
     email = Column(String(120), nullable=False)
     phone_number = Column(String(15), nullable=False)
     birthday = Column(Date)
+    user_id = Column(
+        "user_id", ForeignKey("users.id", ondelete="CASCADE"), default=None
+    )
+    user = relationship("User", backref="contacts")
 
-    # id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # title: Mapped[str] = mapped_column(String(50), nullable=False)
-    # created_at: Mapped[datetime] = mapped_column(
-    #     "created_at", DateTime, default=func.now()
-    # )
-    # updated_at: Mapped[datetime] = mapped_column(
-    #     "updated_at", DateTime, default=func.now(), onupdate=func.now()
-    # )
-    # description: Mapped[str] = mapped_column(String(150), nullable=False)
-    # done: Mapped[bool] = mapped_column(Boolean, default=False)
-    # tags: Mapped[list["Tag"]] = relationship(
-    #     "Tag", secondary=note_m2m_tag, backref="notes"
-    # )
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    username = Column(String, unique=True)
+    email = Column(String, unique=True)
+    hashed_password = Column(String)
+    created_at = Column(DateTime, default=func.now())
+    avatar = Column(String(255), nullable=True)
